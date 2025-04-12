@@ -3,6 +3,9 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
+# ✅ 必須放在最前面
+st.set_page_config(layout="centered", page_title="抽獎舞台畫面")
+
 # Google Sheet 設定
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 sheet_url = "https://docs.google.com/spreadsheets/d/1hQ4nWSScK4tQIG1XUZyflCZauGj1MUtApICIglsdSmg"
@@ -56,8 +59,6 @@ def set_bg(image_file):
     """, unsafe_allow_html=True)
 
 set_bg("my_bg.jpg")
-st.set_page_config(layout="centered", page_title="抽獎舞台畫面")
-
 st.title("🎬 舞台投影畫面")
 
 placeholder = st.empty()
