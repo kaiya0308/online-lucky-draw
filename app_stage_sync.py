@@ -4,7 +4,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import time
 import json
 
-# ✅ 從 secrets 中讀取憑證（Streamlit Cloud 可用）
+# 從 secrets 讀取 GCP 金鑰
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(st.secrets["GCP_CREDENTIALS"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -12,7 +12,6 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key("1hQ4nWSScK4tQIG1XUZyflCZauGj1MUtApICIglsdSmg")
 ws = sheet.sheet1
 
-# ✅ 設定頁面與背景
 st.set_page_config(layout="centered", page_title="抽獎舞台畫面")
 
 def set_bg(image_file):
@@ -50,14 +49,14 @@ while True:
         if len(row) < 5:
             row += [""] * (5 - len(row))
         state = {
-            "stage": row[0],
-            "prize": row[1],
-            "name": row[2],
-            "title": row[3],
-            "team": row[4]
+            "stage": row[0].strip(),
+            "prize": row[1].strip(),
+            "name": row[2].strip(),
+            "title": row[3].strip(),
+            "team": row[4].strip()
         }
 
-        # 如果畫面狀態有變，才重新畫面
+        # 僅當狀態變化時更新畫面
         if state != last_state:
             with placeholder.container():
                 if state["stage"] == "prize":

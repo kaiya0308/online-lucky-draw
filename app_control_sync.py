@@ -7,7 +7,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from io import BytesIO
 import json
 
-# ✅ 從 secrets 調用 GCP 金鑰（雲端部署用）
+# Google Sheets 連線設定
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(st.secrets["GCP_CREDENTIALS"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -18,7 +18,7 @@ ws = sheet.sheet1
 def update_sheet(stage, prize="", name="", title="", team=""):
     ws.update("A2", [[stage, prize, name, title, team]])
 
-# 初始化狀態
+# 初始化 session state
 if "participants_df" not in st.session_state:
     st.session_state.participants_df = None
 if "prizes_df" not in st.session_state:
@@ -31,7 +31,7 @@ if "current_winners" not in st.session_state:
     st.session_state.current_winners = []
 
 st.set_page_config(layout="centered", page_title="抽獎控制端")
-st.title("🎯 雲端版抽獎控制端")
+st.title("🎯 雲端版抽獎控制端（更新版）")
 
 uploaded = st.file_uploader("📥 上傳抽獎 Excel", type="xlsx")
 if uploaded:
@@ -60,10 +60,11 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
         if len(available) == 0:
             st.warning("⚠️ 沒有可抽的參加者")
         else:
-            winner = available.sample(1).iloc[0]
-            st.session_state.current_winners.append(winner)
+            winner = available.sample(1)
+            winner_dict = winner.iloc[0].to_dict()
+            st.session_state.current_winners.append(winner_dict)
             st.session_state.drawn_count += 1
-            update_sheet("winner", prize_name, winner["姓名"], winner["職稱"], winner["社名"])
+            update_sheet("winner", prize_name, winner_dict["姓名"], winner_dict["職稱"], winner_dict["社名"])
             st.rerun()
 
     for i, row in enumerate(st.session_state.current_winners):
@@ -72,13 +73,19 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
             col1, col2 = st.columns(2)
             with col1:
                 if st.button(f"✅ 到場 - {i}", key=f"ok_{i}"):
-                    idx = st.session_state.participants_df.index[(st.session_state.participants_df["姓名"] == row["姓名"]) & (st.session_state.participants_df["職稱"] == row["職稱"])]
+                    idx = st.session_state.participants_df.index[
+                        (st.session_state.participants_df["姓名"] == row["姓名"]) &
+                        (st.session_state.participants_df["職稱"] == row["職稱"])
+                    ]
                     if not idx.empty:
                         st.session_state.participants_df.at[idx[0], "狀態"] = "中獎"
                         st.session_state.current_winners[i] = None
             with col2:
                 if st.button(f"❌ 缺席 - {i}", key=f"no_{i}"):
-                    idx = st.session_state.participants_df.index[(st.session_state.participants_df["姓名"] == row["姓名"]) & (st.session_state.participants_df["職稱"] == row["職稱"])]
+                    idx = st.session_state.participants_df.index[
+                        (st.session_state.participants_df["姓名"] == row["姓名"]) &
+                        (st.session_state.participants_df["職稱"] == row["職稱"])
+                    ]
                     if not idx.empty:
                         st.session_state.participants_df.at[idx[0], "狀態"] = "缺席"
                         st.session_state.current_winners[i] = None
