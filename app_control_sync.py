@@ -4,6 +4,7 @@ import random
 import gspread
 from gspread_dataframe import set_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
+from io import BytesIO
 
 # Google Sheet 設定
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -95,8 +96,13 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
             st.session_state.current_prize_index += 1
             st.session_state.drawn_count = 0
 
+    excel_buffer = BytesIO()
+    st.session_state.participants_df.to_excel(excel_buffer, index=False, engine="openpyxl")
+    excel_buffer.seek(0)
+
     st.download_button(
         "💾 下載更新後的名單",
-        data=st.session_state.participants_df.to_excel(index=False, engine="openpyxl"),
-        file_name="更新後名單.xlsx"
+        data=excel_buffer,
+        file_name="更新後名單.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
