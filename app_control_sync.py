@@ -7,7 +7,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 from io import BytesIO
 import json
 
-# Google Sheets 認證
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(st.secrets["GCP_CREDENTIALS"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -30,7 +29,7 @@ if "current_winners" not in st.session_state:
     st.session_state.current_winners = []
 
 st.set_page_config(layout="centered", page_title="抽獎控制端")
-st.title("🎯 控制端（主持人手動換獎項 + 初始清空舞台）")
+st.title("🎯 控制端（手動切換獎項 + 自動顯示獎項）")
 
 uploaded = st.file_uploader("📥 上傳抽獎 Excel", type="xlsx")
 if uploaded:
@@ -42,8 +41,7 @@ if uploaded:
     st.session_state.current_prize_index = 0
     st.session_state.drawn_count = 0
     st.session_state.current_winners = []
-
-    update_sheet("", "", "", "", "")  # 清除舞台顯示
+    update_sheet("", "", "", "", "")  # 清空舞台顯示
     st.success("✅ 資料匯入成功並已重設舞台畫面")
 
 if st.session_state.participants_df is not None and st.session_state.current_prize_index < len(st.session_state.prizes_df):
@@ -93,7 +91,11 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
         st.session_state.current_prize_index += 1
         st.session_state.drawn_count = 0
         st.session_state.current_winners = []
-        update_sheet("prize", "", "", "", "")
+        if st.session_state.current_prize_index < len(st.session_state.prizes_df):
+            next_prize = st.session_state.prizes_df.iloc[st.session_state.current_prize_index]
+            update_sheet("prize", next_prize["獎項名稱"], "", "", "")
+        else:
+            update_sheet("", "", "", "", "")
         st.rerun()
 
     excel_buffer = BytesIO()
