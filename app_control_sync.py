@@ -7,6 +7,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from io import BytesIO
 import json
 
+# Google Sheets 認證
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(st.secrets["GCP_CREDENTIALS"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -27,11 +28,9 @@ if "drawn_count" not in st.session_state:
     st.session_state.drawn_count = 0
 if "current_winners" not in st.session_state:
     st.session_state.current_winners = []
-if "last_drawn" not in st.session_state:
-    st.session_state.last_drawn = None
 
 st.set_page_config(layout="centered", page_title="抽獎控制端")
-st.title("🎯 雲端版抽獎控制端（修正顯示）")
+st.title("🎯 控制端（主持人手動換獎項 + 初始清空舞台）")
 
 uploaded = st.file_uploader("📥 上傳抽獎 Excel", type="xlsx")
 if uploaded:
@@ -43,8 +42,9 @@ if uploaded:
     st.session_state.current_prize_index = 0
     st.session_state.drawn_count = 0
     st.session_state.current_winners = []
-    st.session_state.last_drawn = None
-    st.success("✅ 資料匯入成功")
+
+    update_sheet("", "", "", "", "")  # 清除舞台顯示
+    st.success("✅ 資料匯入成功並已重設舞台畫面")
 
 if st.session_state.participants_df is not None and st.session_state.current_prize_index < len(st.session_state.prizes_df):
     current_prize = st.session_state.prizes_df.iloc[st.session_state.current_prize_index]
@@ -63,7 +63,6 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
         else:
             winner = available.sample(1).iloc[0].to_dict()
             st.session_state.current_winners.append(winner)
-            st.session_state.last_drawn = winner
             st.session_state.drawn_count += 1
             update_sheet("winner", prize_name, winner["姓名"], winner["職稱"], winner["社名"])
 
@@ -90,15 +89,12 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
                         st.session_state.participants_df.at[idx[0], "狀態"] = "缺席"
                         st.session_state.current_winners[i] = None
 
-    current_cleaned = [x for x in st.session_state.current_winners if x is not None]
-    if st.session_state.drawn_count >= prize_count and not current_cleaned:
-        if st.button("➡️ 下一個獎項"):
-            st.session_state.current_prize_index += 1
-            st.session_state.drawn_count = 0
-            st.session_state.current_winners = []
-            st.session_state.last_drawn = None
-            update_sheet("prize", "", "", "", "")
-            st.rerun()
+    if st.button("➡️ 下一個獎項（主持人手動控制）"):
+        st.session_state.current_prize_index += 1
+        st.session_state.drawn_count = 0
+        st.session_state.current_winners = []
+        update_sheet("prize", "", "", "", "")
+        st.rerun()
 
     excel_buffer = BytesIO()
     st.session_state.participants_df.to_excel(excel_buffer, index=False, engine="openpyxl")
