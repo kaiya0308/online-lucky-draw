@@ -43,27 +43,30 @@ placeholder = st.empty()
 last_state = {}
 
 while True:
-    data = ws.get_all_values()
-    if len(data) >= 2:
-        row = data[1]
-        if len(row) < 5:
-            row += [""] * (5 - len(row))
-        state = {
-            "stage": row[0].strip(),
-            "prize": row[1].strip(),
-            "name": row[2].strip(),
-            "title": row[3].strip(),
-            "team": row[4].strip()
-        }
+    try:
+        data = ws.get_all_values()
+        if len(data) >= 2:
+            row = data[1]
+            if len(row) < 5:
+                row += [""] * (5 - len(row))
+            state = {
+                "stage": row[0].strip(),
+                "prize": row[1].strip(),
+                "name": row[2].strip(),
+                "title": row[3].strip(),
+                "team": row[4].strip()
+            }
 
-        if state != last_state:
-            with placeholder.container():
-                if state["stage"] == "prize" and state["prize"]:
-                    st.markdown(f"<div class='big'>🎁 現在抽的是：{state['prize']}</div>", unsafe_allow_html=True)
-                elif state["stage"] == "winner" and state["name"]:
-                    st.markdown(f"<div class='big'>🎉 恭喜：{state['name']}<br>{state['title']} - {state['team']}</div>", unsafe_allow_html=True)
-                else:
-                    st.markdown("<div class='big'>等待主持人操作...</div>", unsafe_allow_html=True)
-            last_state = state
+            if state != last_state:
+                with placeholder.container():
+                    if state["stage"] == "prize" and state["prize"]:
+                        st.markdown(f"<div class='big'>🎁 現在抽的是：{state['prize']}</div>", unsafe_allow_html=True)
+                    elif state["stage"] == "winner" and state["name"]:
+                        st.markdown(f"<div class='big'>🎉 恭喜：{state['name']}<br>{state['title']} - {state['team']}</div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown("<div class='big'>等待主持人操作...</div>", unsafe_allow_html=True)
+                last_state = state
+    except Exception as e:
+        print("抓取資料失敗，稍後重試...", e)
 
     time.sleep(2)
