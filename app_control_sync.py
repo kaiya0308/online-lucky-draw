@@ -27,9 +27,11 @@ if "drawn_count" not in st.session_state:
     st.session_state.drawn_count = 0
 if "current_winners" not in st.session_state:
     st.session_state.current_winners = []
+if "last_drawn" not in st.session_state:
+    st.session_state.last_drawn = None
 
 st.set_page_config(layout="centered", page_title="抽獎控制端")
-st.title("🎯 雲端版抽獎控制端（更新版）")
+st.title("🎯 雲端版抽獎控制端（修正顯示）")
 
 uploaded = st.file_uploader("📥 上傳抽獎 Excel", type="xlsx")
 if uploaded:
@@ -41,6 +43,7 @@ if uploaded:
     st.session_state.current_prize_index = 0
     st.session_state.drawn_count = 0
     st.session_state.current_winners = []
+    st.session_state.last_drawn = None
     st.success("✅ 資料匯入成功")
 
 if st.session_state.participants_df is not None and st.session_state.current_prize_index < len(st.session_state.prizes_df):
@@ -58,12 +61,11 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
         if len(available) == 0:
             st.warning("⚠️ 沒有可抽的參加者")
         else:
-            winner = available.sample(1)
-            winner_dict = winner.iloc[0].to_dict()
-            st.session_state.current_winners.append(winner_dict)
+            winner = available.sample(1).iloc[0].to_dict()
+            st.session_state.current_winners.append(winner)
+            st.session_state.last_drawn = winner
             st.session_state.drawn_count += 1
-            update_sheet("winner", prize_name, winner_dict["姓名"], winner_dict["職稱"], winner_dict["社名"])
-            st.rerun()
+            update_sheet("winner", prize_name, winner["姓名"], winner["職稱"], winner["社名"])
 
     for i, row in enumerate(st.session_state.current_winners):
         if row is not None:
@@ -94,6 +96,7 @@ if st.session_state.participants_df is not None and st.session_state.current_pri
             st.session_state.current_prize_index += 1
             st.session_state.drawn_count = 0
             st.session_state.current_winners = []
+            st.session_state.last_drawn = None
             update_sheet("prize", "", "", "", "")
             st.rerun()
 

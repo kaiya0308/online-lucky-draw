@@ -56,11 +56,12 @@ while True:
             "team": row[4].strip()
         }
 
+        # 自動切換畫面，空的或未知狀態也處理
         if state != last_state:
             with placeholder.container():
-                if state["stage"] == "prize":
+                if state["stage"] == "prize" and state["prize"]:
                     st.markdown(f"<div class='big'>🎁 現在抽的是：{state['prize']}</div>", unsafe_allow_html=True)
-                elif state["stage"] == "winner":
+                elif state["stage"] == "winner" and state["name"]:
                     st.markdown(f"<div class='big'>🎉 恭喜：{state['name']}<br>{state['title']} - {state['team']}</div>", unsafe_allow_html=True)
                 else:
                     st.markdown("<div class='big'>等待主持人操作...</div>", unsafe_allow_html=True)
